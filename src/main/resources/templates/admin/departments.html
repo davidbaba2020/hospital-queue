@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<link rel="stylesheet" th:href="@{/css/app.css}"/></head>
+<body>
+<th:block th:replace="~{fragments/layout :: sidebar}"></th:block>
+<div class="main-wrap">
+  <th:block th:replace="~{fragments/layout :: topbar}"></th:block>
+  <main class="content-area">
+    <div class="table-card">
+      <div class="table-card__header">
+        <h3><i data-lucide="building-2"></i> Departments</h3>
+        <span class="badge badge--info" th:text="${departments.size() + ' departments'}">0</span>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr><th>Code</th><th>Name</th><th>Description</th><th>Max Queue</th><th>Status</th><th>Doctors</th></tr>
+          </thead>
+          <tbody>
+            <tr th:each="dept : ${departments}">
+              <td><span class="user-tag" th:text="${dept.code}">GEN</span></td>
+              <td><strong th:text="${dept.name}">General</strong></td>
+              <td th:text="${dept.description ?: '—'}">Description</td>
+              <td th:text="${dept.maxQueue}">50</td>
+              <td>
+                <span th:if="${dept.active}" class="badge badge--success">Active</span>
+                <span th:unless="${dept.active}" class="badge badge--secondary">Inactive</span>
+              </td>
+              <td th:text="${dept.doctors.size()}">0</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+<script>lucide.createIcons();</script>
+</body>
+</html>

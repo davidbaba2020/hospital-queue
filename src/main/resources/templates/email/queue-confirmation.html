@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Queue Confirmation</title>
+  <style>
+    body { margin:0; padding:0; background:#f0f4f8; font-family:'DM Sans',Arial,sans-serif; }
+    .wrapper { max-width:600px; margin:40px auto; }
+    .header { background:linear-gradient(135deg,#1a5676 0%,#0e3a52 100%); border-radius:16px 16px 0 0; padding:40px 48px; text-align:center; }
+    .logo { display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:24px; }
+    .logo-icon { width:48px; height:48px; background:rgba(255,255,255,0.2); border-radius:12px; display:flex; align-items:center; justify-content:center; }
+    .logo-text { color:white; font-size:22px; font-weight:700; letter-spacing:-0.5px; }
+    .header h1 { color:white; font-size:28px; margin:0 0 8px; font-weight:700; }
+    .header p  { color:rgba(255,255,255,0.75); margin:0; font-size:15px; }
+    .body  { background:white; padding:48px; }
+    .greeting { font-size:18px; color:#1a2332; font-weight:600; margin-bottom:8px; }
+    .subtext  { color:#6b7280; font-size:15px; margin-bottom:32px; line-height:1.6; }
+    .ticket-box { background:linear-gradient(135deg,#f0f9ff 0%,#e0f2fe 100%); border:2px dashed #38bdf8; border-radius:16px; padding:32px; text-align:center; margin:24px 0; }
+    .ticket-label { font-size:11px; text-transform:uppercase; letter-spacing:2px; color:#0284c7; font-weight:700; margin-bottom:8px; }
+    .ticket-number { font-size:42px; font-weight:800; color:#1a5676; letter-spacing:-1px; margin:8px 0; font-family:monospace; }
+    .details-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:24px 0; }
+    .detail-item { background:#f9fafb; border-radius:10px; padding:16px; }
+    .detail-item label { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#9ca3af; display:block; margin-bottom:4px; }
+    .detail-item span  { font-size:16px; font-weight:600; color:#1a2332; }
+    .priority-CRITICAL { background:#fef2f2; }
+    .priority-HIGH     { background:#fff7ed; }
+    .priority-NORMAL   { background:#f0fdf4; }
+    .alert-box { background:#fffbeb; border-left:4px solid #f59e0b; border-radius:0 8px 8px 0; padding:16px 20px; margin:24px 0; }
+    .alert-box p { margin:0; color:#92400e; font-size:14px; line-height:1.6; }
+    .footer { background:#f9fafb; border-radius:0 0 16px 16px; padding:24px 48px; text-align:center; border-top:1px solid #e5e7eb; }
+    .footer p { color:#9ca3af; font-size:13px; margin:4px 0; }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+          <path d="M14 4v20M4 14h20" stroke="white" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <span class="logo-text">MediQueue</span>
+    </div>
+    <h1>You're in the Queue!</h1>
+    <p>Your appointment has been registered successfully</p>
+  </div>
+
+  <div class="body">
+    <p class="greeting">Hello, <span th:text="${patientName}">Patient</span> 👋</p>
+    <p class="subtext">
+      You have been successfully registered in our queue system.
+      Please keep this ticket number handy and listen for your name to be called.
+    </p>
+
+    <div class="ticket-box">
+      <p class="ticket-label">Your Ticket Number</p>
+      <p class="ticket-number" th:text="${ticketNumber}">TKT-GEN-001</p>
+      <p style="color:#0284c7; margin:0; font-size:14px;">Show this at the reception desk</p>
+    </div>
+
+    <div class="details-grid">
+      <div class="detail-item">
+        <label>Department</label>
+        <span th:text="${department}">General Practice</span>
+      </div>
+      <div class="detail-item">
+        <label>Queue Position</label>
+        <span th:text="'#' + ${position}">#1</span>
+      </div>
+      <div class="detail-item" th:classappend="'priority-' + ${priority}">
+        <label>Priority Level</label>
+        <span th:text="${priority}">NORMAL</span>
+      </div>
+      <div class="detail-item">
+        <label>Est. Wait Time</label>
+        <span th:text="${estimatedWait + ' minutes'}">15 minutes</span>
+      </div>
+    </div>
+
+    <div th:if="${chiefComplaint}" class="detail-item" style="margin-bottom:16px">
+      <label>Chief Complaint</label>
+      <span th:text="${chiefComplaint}">Complaint</span>
+    </div>
+
+    <div class="alert-box">
+      <p>
+        ⏰ <strong>Please arrive promptly.</strong>
+        If you cannot make it, kindly inform the reception desk as soon as possible.
+        Missing your turn may require re-registration.
+      </p>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p><strong>Hospital Queue Management System</strong></p>
+    <p>This is an automated message — please do not reply.</p>
+    <p>For assistance, contact the reception desk directly.</p>
+  </div>
+</div>
+</body>
+</html>

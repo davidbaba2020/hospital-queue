@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head><meta charset="UTF-8"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<link rel="stylesheet" th:href="@{/css/app.css}"/></head>
+<body>
+<th:block th:replace="~{fragments/layout :: sidebar}"></th:block>
+<div class="main-wrap">
+  <th:block th:replace="~{fragments/layout :: topbar}"></th:block>
+  <main class="content-area">
+
+    <!-- Filter bar -->
+    <div class="filter-bar">
+      <form th:action="@{/admin/audit-logs}" method="get" class="filter-form">
+        <div class="input-wrap">
+          <i data-lucide="search" class="input-icon"></i>
+          <input type="text" name="username" class="form-input"
+                 placeholder="Filter by username…"
+                 th:value="${usernameFilter}"/>
+        </div>
+        <button type="submit" class="btn btn--primary">Search</button>
+        <a th:href="@{/admin/audit-logs}" class="btn btn--ghost">Clear</a>
+      </form>
+    </div>
+
+    <!-- Table -->
+    <div class="table-card">
+      <div class="table-card__header">
+        <h3><i data-lucide="scroll-text"></i> Audit Log</h3>
+        <span class="badge badge--info" th:text="${auditLogs.totalElements + ' entries'}">0 entries</span>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Username</th>
+              <th>Action</th>
+              <th>Entity</th>
+              <th>Entity ID</th>
+              <th>IP Address</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:if="${auditLogs.isEmpty()}">
+              <td colspan="7" class="empty-row">
+                <i data-lucide="inbox"></i> No audit records found.
+              </td>
+            </tr>
+            <tr th:each="log : ${auditLogs}" th:classappend="${log.status == 'FAILURE' ? 'row--error' : ''}">
+              <td class="mono text-sm" th:text="${#temporals.format(log.performedAt,'yyyy-MM-dd HH:mm:ss')}">—</td>
+              <td><span class="user-tag" th:text="${log.username}">user</span></td>
+              <td><code th:text="${log.action}">ACTION</code></td>
+              <td th:text="${log.entityType ?: '—'}">Entity</td>
+              <td th:text="${log.entityId ?: '—'}">—</td>
+              <td class="mono text-sm" th:text="${log.ipAddress ?: '—'}">—</td>
+              <td>
+                <span th:classappend="${log.status == 'SUCCESS' ? 'badge--success' : 'badge--danger'}"
+                      class="badge" th:text="${log.status}">SUCCESS</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination" th:if="${auditLogs.totalPages > 1}">
+        <a th:href="@{/admin/audit-logs(page=${auditLogs.number - 1}, username=${usernameFilter})}"
+           th:classappend="${auditLogs.first ? 'disabled' : ''}"
+           class="page-btn"><i data-lucide="chevron-left"></i></a>
+        <span class="page-info"
+              th:text="'Page ' + (${auditLogs.number + 1}) + ' of ' + ${auditLogs.totalPages}">1 of 1</span>
+        <a th:href="@{/admin/audit-logs(page=${auditLogs.number + 1}, username=${usernameFilter})}"
+           th:classappend="${auditLogs.last ? 'disabled' : ''}"
+           class="page-btn"><i data-lucide="chevron-right"></i></a>
+      </div>
+    </div>
+
+  </main>
+</div>
+<script>lucide.createIcons();</script>
+</body>
+</html>

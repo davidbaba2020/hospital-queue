@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>403 Forbidden — MediQueue</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'DM Sans',sans-serif;background:#f4f7fb;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center}
+    .card{background:#fff;border-radius:20px;padding:60px 48px;max-width:480px;box-shadow:0 8px 32px rgba(0,0,0,.08)}
+    .code{font-family:'Syne',sans-serif;font-size:96px;font-weight:800;color:#dc2626;line-height:1}
+    .title{font-family:'Syne',sans-serif;font-size:24px;font-weight:700;color:#1a3a52;margin:12px 0 8px}
+    .msg{color:#6b7280;font-size:15px;line-height:1.7;margin-bottom:28px}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 24px;border-radius:10px;background:#1a5676;color:#fff;font-weight:600;text-decoration:none;font-size:14px}
+    .btn:hover{background:#1a3a52}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="code">403</div>
+    <h1 class="title">Access Denied</h1>
+    <p class="msg">You don't have permission to access this page.<br/>Contact your administrator if you believe this is a mistake.</p>
+    <a href="javascript:history.back()" class="btn">← Go Back</a>
+  </div>
+</body>
+</html>

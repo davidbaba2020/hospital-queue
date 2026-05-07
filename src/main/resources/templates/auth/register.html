@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Register — MediQueue</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <link rel="stylesheet" th:href="@{/css/app.css}"/>
+</head>
+<body class="auth-body">
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:40px">
+  <div style="width:100%;max-width:560px;background:white;border-radius:20px;padding:48px;box-shadow:var(--shadow-lg)">
+
+    <div style="text-align:center;margin-bottom:32px">
+      <div style="display:inline-flex;align-items:center;gap:10px;margin-bottom:20px">
+        <div style="width:36px;height:36px;background:var(--navy);border-radius:8px;display:flex;align-items:center;justify-content:center">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M10 2v16M2 10h16" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <span style="font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--navy)">MediQueue</span>
+      </div>
+      <h2 style="font-family:var(--font-display);font-size:26px;font-weight:800;color:var(--navy);margin-bottom:4px">Create Account</h2>
+      <p style="color:var(--text-muted)">Register a new staff account</p>
+    </div>
+
+    <div th:if="${errorMsg}" class="auth-alert auth-alert--error">
+      <i data-lucide="alert-circle"></i><span th:text="${errorMsg}"></span>
+    </div>
+
+    <form th:action="@{/auth/register}" th:object="${registerRequest}" method="post" novalidate>
+      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+      <div class="form-row" style="margin-bottom:14px">
+        <div class="form-group">
+          <label class="form-label">Full Name *</label>
+          <input type="text" th:field="*{fullName}" class="form-input" placeholder="Dr. Jane Smith"/>
+          <div th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}" class="form-error"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Username *</label>
+          <input type="text" th:field="*{username}" class="form-input" placeholder="jane.smith"/>
+          <div th:if="${#fields.hasErrors('username')}" th:errors="*{username}" class="form-error"></div>
+        </div>
+      </div>
+
+      <div class="form-row" style="margin-bottom:14px">
+        <div class="form-group">
+          <label class="form-label">Email *</label>
+          <input type="email" th:field="*{email}" class="form-input" placeholder="jane@hospital.com"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone</label>
+          <input type="tel" th:field="*{phone}" class="form-input" placeholder="+1-555-0100"/>
+        </div>
+      </div>
+
+      <div class="form-row" style="margin-bottom:14px">
+        <div class="form-group">
+          <label class="form-label">Password *</label>
+          <input type="password" th:field="*{password}" class="form-input" placeholder="Min 8 chars, 1 upper, 1 number, 1 symbol"/>
+          <div th:if="${#fields.hasErrors('password')}" th:errors="*{password}" class="form-error"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Role *</label>
+          <select th:field="*{role}" class="form-select" onchange="toggleDoctorFields(this.value)">
+            <option value="">Select role…</option>
+            <option value="ADMIN">Administrator</option>
+            <option value="DOCTOR">Doctor</option>
+            <option value="RECEPTIONIST">Receptionist</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Doctor-specific fields -->
+      <div id="doctor-fields" style="display:none;border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px;background:var(--surface-2)">
+        <p style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);font-weight:700;margin-bottom:12px">Doctor Details</p>
+        <div class="form-group" style="margin-bottom:12px">
+          <label class="form-label">Department</label>
+          <select th:field="*{departmentId}" class="form-select">
+            <option value="">Select department…</option>
+            <option th:each="d : ${departments}" th:value="${d.id}" th:text="${d.name}">Dept</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Specialization</label>
+            <input type="text" th:field="*{specialization}" class="form-input" placeholder="e.g. Cardiology"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">License Number</label>
+            <input type="text" th:field="*{licenseNumber}" class="form-input" placeholder="LIC-000-001"/>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn--primary btn--full" style="padding:13px;font-size:15px;margin-bottom:16px">
+        <i data-lucide="user-plus"></i> Create Account
+      </button>
+
+      <p style="text-align:center;font-size:14px;color:var(--text-muted)">
+        Already have an account? <a th:href="@{/auth/login}" style="color:var(--navy-2);font-weight:600">Sign in</a>
+      </p>
+    </form>
+  </div>
+</div>
+
+<script>
+  lucide.createIcons();
+  function toggleDoctorFields(role) {
+    document.getElementById('doctor-fields').style.display = role === 'DOCTOR' ? 'block' : 'none';
+  }
+</script>
+</body>
+</html>

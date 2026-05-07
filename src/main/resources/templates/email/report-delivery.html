@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Report Delivery</title>
+  <style>
+    body { margin:0; padding:0; background:#f0f4f8; font-family:'DM Sans',Arial,sans-serif; }
+    .wrapper { max-width:600px; margin:40px auto; }
+    .header  { background:linear-gradient(135deg,#1a5676,#0e3a52); border-radius:16px 16px 0 0; padding:40px 48px; text-align:center; }
+    .header h1 { color:white; font-size:26px; margin:0 0 8px; font-weight:700; }
+    .header p  { color:rgba(255,255,255,0.75); margin:0; }
+    .body    { background:white; padding:48px; }
+    .attach-card { background:#f0fdf4; border:1px solid #86efac; border-radius:12px; padding:20px 24px; display:flex; align-items:center; gap:16px; margin:24px 0; }
+    .attach-icon { font-size:32px; }
+    .attach-info { flex:1; }
+    .attach-info p { margin:0; }
+    .attach-name { font-weight:600; color:#1a2332; font-size:16px; }
+    .attach-type { color:#6b7280; font-size:13px; }
+    .footer  { background:#f9fafb; border-radius:0 0 16px 16px; padding:24px 48px; text-align:center; border-top:1px solid #e5e7eb; }
+    .footer p { color:#9ca3af; font-size:13px; margin:4px 0; }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="header">
+    <h1>📊 Your Report is Ready</h1>
+    <p>Hospital Queue Management System — Report Delivery</p>
+  </div>
+  <div class="body">
+    <p>Hello, <strong th:text="${recipientName}">Recipient</strong>,</p>
+    <p>Your requested report has been generated and is attached to this email.</p>
+    <div class="attach-card">
+      <div class="attach-icon">📎</div>
+      <div class="attach-info">
+        <p class="attach-name" th:text="${filename}">report.xlsx</p>
+        <p class="attach-type" th:text="${reportType}">EXCEL Report</p>
+      </div>
+    </div>
+    <p style="color:#6b7280;font-size:14px;">
+      Please keep this report confidential as it contains sensitive patient information.
+      Do not share with unauthorised personnel.
+    </p>
+  </div>
+  <div class="footer">
+    <p><strong>MediQueue Hospital System</strong></p>
+    <p>This is an automated message — do not reply.</p>
+  </div>
+</div>
+</body>
+</html>

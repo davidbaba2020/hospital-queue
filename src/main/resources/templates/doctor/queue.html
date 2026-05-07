@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<link rel="stylesheet" th:href="@{/css/app.css}"/></head>
+<body>
+<th:block th:replace="~{fragments/layout :: sidebar}"></th:block>
+<div class="main-wrap">
+  <th:block th:replace="~{fragments/layout :: topbar}"></th:block>
+  <main class="content-area">
+
+    <!-- Department header -->
+    <div class="section-header" style="margin-bottom:24px">
+      <div>
+        <h2 class="section-title">
+          <i data-lucide="building-2"></i>
+          <span th:text="${doctor.department.name + ' — Active Queue'}">Department Queue</span>
+        </h2>
+        <p style="color:var(--text-secondary);margin-top:4px"
+           th:text="'All active patients waiting in ' + ${doctor.department.name}">Dept info</p>
+      </div>
+      <span class="badge badge--info" th:text="${queueEntries.size() + ' active'}">0 active</span>
+    </div>
+
+    <div class="queue-board" id="queue-board">
+      <div th:if="${queueEntries.isEmpty()}" class="empty-state">
+        <i data-lucide="check-circle-2" class="empty-icon"></i>
+        <p>No active patients in the department queue right now.</p>
+      </div>
+
+      <div th:each="entry,stat : ${queueEntries}" class="queue-card"
+           th:classappend="${entry.priority.name() == 'CRITICAL' ? ' queue-card--critical' :
+                            entry.priority.name() == 'HIGH' ? ' queue-card--high' : ''}"
+           th:data-entry-id="${entry.id}">
+        <div class="qc-position">
+          <span th:text="${stat.index + 1}">1</span>
+        </div>
+        <div class="qc-priority-bar"
+             th:classappend="${'priority-' + entry.priority.name().toLowerCase()}"></div>
+        <div class="qc-body">
+          <div class="qc-header">
+            <span class="qc-ticket" th:text="${entry.ticketNumber}">TKT-001</span>
+            <span class="qc-priority-badge"
+                  th:classappend="${'priority-badge--' + entry.priority.name().toLowerCase()}"
+                  th:text="${entry.priority.icon + ' ' + entry.priority.name()}">● NORMAL</span>
+            <span class="qc-status"
+                  th:classappend="${'status-' + entry.status.name().toLowerCase()}"
+                  th:text="${entry.status}">WAITING</span>
+          </div>
+          <h3 class="qc-patient" th:text="${entry.patient.fullName}">Patient Name</h3>
+          <p class="qc-complaint" th:text="${entry.chiefComplaint ?: 'No chief complaint noted'}">Complaint</p>
+          <div class="qc-meta">
+            <span><i data-lucide="clock-3"></i>
+              <span th:text="${#temporals.format(entry.registeredAt,'HH:mm')}">00:00</span>
+            </span>
+            <span th:if="${entry.doctor != null}">
+              <i data-lucide="stethoscope"></i>
+              <span th:text="${entry.doctor.user.fullName}">Doctor</span>
+            </span>
+          </div>
+        </div>
+        <div class="qc-actions">
+          <button th:if="${entry.status.name() == 'WAITING'}"
+                  th:onclick="'updateQueueStatus(' + ${entry.id} + ', \'CALLED\')'"
+                  class="btn btn--sm btn--teal">
+            <i data-lucide="bell"></i> Call
+          </button>
+          <button th:if="${entry.status.name() == 'CALLED'}"
+                  th:onclick="'updateQueueStatus(' + ${entry.id} + ', \'IN_PROGRESS\')'"
+                  class="btn btn--sm btn--primary">
+            <i data-lucide="play"></i> Start
+          </button>
+          <button th:if="${entry.status.name() == 'IN_PROGRESS'}"
+                  th:onclick="'updateQueueStatus(' + ${entry.id} + ', \'COMPLETED\')'"
+                  class="btn btn--sm btn--success">
+            <i data-lucide="check"></i> Done
+          </button>
+          <button th:if="${entry.status.name() == 'CALLED'}"
+                  th:onclick="'updateQueueStatus(' + ${entry.id} + ', \'NO_SHOW\')'"
+                  class="btn btn--sm btn--ghost">
+            <i data-lucide="user-x"></i> No-Show
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script th:src="@{/js/app.js}"></script>
+<script th:src="@{/js/queue.js}"></script>
+<script th:inline="javascript">
+  const deptId = /*[[${doctor.department.id}]]*/ null;
+  lucide.createIcons();
+  connectQueueSocket(deptId);
+
+  function updateQueueStatus(entryId, status) {
+    fetch('/doctor/queue/' + entryId + '/status?status=' + status, {
+      method: 'POST',
+      headers: {'X-XSRF-TOKEN': getCsrfToken()}
+    }).then(() => location.reload())
+      .catch(() => showToast('Failed to update queue', 'error'));
+  }
+</script>
+</body>
+</html>

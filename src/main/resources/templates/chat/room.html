@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head><meta charset="UTF-8"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<link rel="stylesheet" th:href="@{/css/app.css}"/></head>
+<body>
+<th:block th:replace="~{fragments/layout :: sidebar}"></th:block>
+<div class="main-wrap">
+  <th:block th:replace="~{fragments/layout :: topbar}"></th:block>
+  <main class="content-area content-area--chat">
+
+    <div class="chat-layout">
+
+      <!-- Sidebar: Rooms -->
+      <div class="chat-rooms">
+        <h3 class="chat-rooms__title">Channels</h3>
+        <a href="/chat?room=general"
+           th:classappend="${roomId == 'general' ? ' active' : ''}"
+           class="room-item">
+          <i data-lucide="hash"></i> general
+        </a>
+        <a href="/chat?room=emergency"
+           th:classappend="${roomId == 'emergency' ? ' active' : ''}"
+           class="room-item">
+          <i data-lucide="hash"></i> emergency
+        </a>
+        <a href="/chat?room=doctors"
+           th:classappend="${roomId == 'doctors' ? ' active' : ''}"
+           class="room-item">
+          <i data-lucide="hash"></i> doctors
+        </a>
+        <a href="/chat?room=admin"
+           th:classappend="${roomId == 'admin' ? ' active' : ''}"
+           class="room-item"
+           sec:authorize="hasRole('ADMIN')">
+          <i data-lucide="hash"></i> admin
+        </a>
+      </div>
+
+      <!-- Main chat area -->
+      <div class="chat-main">
+        <div class="chat-header">
+          <div class="chat-header__title">
+            <i data-lucide="hash"></i>
+            <span th:text="${roomId}">general</span>
+          </div>
+          <div class="chat-header__online">
+            <span class="live-dot"></span>
+            <span id="online-count">— online</span>
+          </div>
+        </div>
+
+        <!-- Messages -->
+        <div class="chat-messages" id="chat-messages">
+          <div th:each="msg : ${history}"
+               class="chat-msg"
+               th:classappend="${msg.senderId == #authentication?.principal?.id ? ' chat-msg--own' : ''}">
+            <div class="msg-avatar" th:text="${msg.avatarInitials}">AB</div>
+            <div class="msg-bubble">
+              <div class="msg-meta">
+                <span class="msg-sender" th:text="${msg.senderName}">Name</span>
+                <span class="msg-time"
+                      th:text="${#temporals.format(msg.sentAt,'HH:mm')}">00:00</span>
+              </div>
+              <div class="msg-content" th:text="${msg.content}">Message content</div>
+            </div>
+          </div>
+          <div th:if="${history.isEmpty()}" class="chat-empty">
+            <i data-lucide="message-circle"></i>
+            <p>No messages yet. Start the conversation!</p>
+          </div>
+        </div>
+
+        <!-- Typing indicator -->
+        <div class="typing-indicator" id="typing-indicator" style="display:none">
+          <span id="typing-text">Someone is typing…</span>
+          <div class="typing-dots"><span></span><span></span><span></span></div>
+        </div>
+
+        <!-- Input -->
+        <div class="chat-input-bar">
+          <input type="text" id="chat-input" class="chat-input"
+                 placeholder="Message #general…"
+                 onkeydown="handleChatKey(event)"
+                 oninput="sendTyping(true)"/>
+          <button class="chat-send-btn" onclick="sendMessage()" id="send-btn">
+            <i data-lucide="send-horizontal"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- SockJS + STOMP -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+<script th:src="@{/js/app.js}"></script>
+<script th:src="@{/js/chat.js}"></script>
+<script th:inline="javascript">
+  const ROOM_ID   = /*[[${roomId}]]*/ 'general';
+  const MY_NAME   = /*[[${#authentication?.name}]]*/ 'User';
+  lucide.createIcons();
+  initChat(ROOM_ID, MY_NAME);
+  scrollToBottom();
+</script>
+</body>
+</html>

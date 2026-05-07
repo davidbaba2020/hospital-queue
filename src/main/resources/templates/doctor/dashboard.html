@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<link rel="stylesheet" th:href="@{/css/app.css}"/></head>
+<body>
+<th:block th:replace="~{fragments/layout :: sidebar}"></th:block>
+<div class="main-wrap">
+  <th:block th:replace="~{fragments/layout :: topbar}"></th:block>
+  <main class="content-area">
+
+    <!-- Doctor profile + status switcher -->
+    <div class="doctor-profile-card">
+      <div class="dp-avatar" th:text="${#strings.substring(doctor.user.fullName,3,5).toUpperCase()}">DR</div>
+      <div class="dp-info">
+        <h2 th:text="${doctor.user.fullName}">Dr. Name</h2>
+        <p th:text="${doctor.specialization + ' · ' + doctor.department.name}">Spec · Dept</p>
+        <p class="dp-license" th:text="'License: ' + ${doctor.licenseNumber}">LIC-000</p>
+      </div>
+      <div class="dp-status-switcher">
+        <p class="dp-status-label">My Status</p>
+        <div class="status-pills">
+          <button th:each="s : ${statuses}"
+                  th:text="${s.label}"
+                  th:classappend="${s.name() == doctor.status.name() ? ' active' : ''}"
+                  th:data-status="${s.name()}"
+                  class="status-pill"
+                  onclick="updateDoctorStatus(this)">Status</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Queue for this doctor -->
+    <div class="section-header">
+      <h2 class="section-title"><i data-lucide="list-ordered"></i> My Patient Queue</h2>
+      <span class="badge badge--info" id="queue-count"
+            th:text="${queueEntries.size() + ' patients'}">0 patients</span>
+    </div>
+
+    <div class="queue-board" id="queue-board">
+      <div th:if="${queueEntries.isEmpty()}" class="empty-state">
+        <i data-lucide="check-circle-2" class="empty-icon"></i>
+        <p>No patients in queue — you're all caught up!</p>
+      </div>
+
+      <div th:each="entry,stat : ${queueEntries}" class="queue-card"
+           th:classappend="${entry.priority.name() == 'CRITICAL' ? ' queue-card--critical' :
+                            entry.priority.name() == 'HIGH' ? ' queue-card--high' : ''}"
+           th:data-entry-id="${entry.id}">
+        <div class="qc-position">
+          <span th:text="${stat.index + 1}">1</span>
+        </div>
+        <div class="qc-priority-bar"
+             th:classappend="${'priority-' + entry.priority.name().toLowerCase()}"></div>
+        <div class="qc-body">
+          <div class="qc-header">
+            <span class="qc-ticket" th:text="${entry.ticketNumber}">TKT-001</span>
+            <span class="qc-priority-badge"
+                  th:classappend="${'priority-badge--' + entry.priority.name().toLowerCase()}"
+                  th:text="${entry.priority.icon + ' ' + entry.priority.name()}">● NORMAL</span>
+            <span class="qc-status"
+                  th:classappend="${'status-' + entry.status.name().toLowerCase()}"
+                  th:text="${entry.status}">WAITING</span>
+          </div>
+          <h3 class="qc-patient" th:text="${entry.patient.fullName}">Patient Name</h3>
+          <p class="qc-complaint" th:text="${entry.chiefComplaint ?: 'No chief complaint noted'}">Complaint</p>
+          <div class="qc-meta">
+            <span><i data-lucide="clock-3"></i>
+              <span th:text="${#temporals.format(entry.registeredAt,'HH:mm')}">00:00</span>
+            </span>
+            <span th:if="${entry.vitals}">
+              <i data-lucide="heart-pulse"></i>
+              <span th:text="${entry.vitals}">Vitals</span>
+            </span>
+          </div>
+        </div>
+        <div class="qc-actions">
+          <button th:if="${entry.status.name() == 'WAITING'}"
+                  th:onclick="'updateQueueStatus(' + ${entry.id} + ', \'CALLED\')'"
+                  class="btn btn--sm btn--teal">
+            <i data-lucide="bell"></i> Call
+          </button>
+          <button th:if="${entry.status.name() == 'CALLED'}"
+                  th:onclick="'updateQueueStatus(' + ${entry.id} + ', \'IN_PROGRESS\')'"
+                  class="btn btn--sm btn--primary">
+            <i data-lucide="play"></i> Start
+          </button>
+          <button th:if="${entry.status.name() == 'IN_PROGRESS'}"
+                  th:onclick="'updateQueueStatus(' + ${entry.id} + ', \'COMPLETED\')'"
+                  class="btn btn--sm btn--success">
+            <i data-lucide="check"></i> Done
+          </button>
+          <button th:onclick="'updateQueueStatus(' + ${entry.id} + ', \'NO_SHOW\')'"
+                  th:if="${entry.status.name() == 'CALLED'}"
+                  class="btn btn--sm btn--ghost">
+            <i data-lucide="user-x"></i> No-Show
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script th:src="@{/js/app.js}"></script>
+<script th:src="@{/js/queue.js}"></script>
+<script th:inline="javascript">
+  const deptId = /*[[${doctor.department.id}]]*/ null;
+  lucide.createIcons();
+  connectQueueSocket(deptId);
+
+  function updateDoctorStatus(btn) {
+    const status = btn.dataset.status;
+    fetch('/doctor/status?status=' + status, { method: 'POST',
+      headers: {'X-XSRF-TOKEN': getCsrfToken()}
+    }).then(r => r.json()).then(d => {
+      document.querySelectorAll('.status-pill').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      showToast(d.message, 'success');
+    }).catch(() => showToast('Failed to update status', 'error'));
+  }
+
+  function updateQueueStatus(entryId, status) {
+    fetch('/doctor/queue/' + entryId + '/status?status=' + status, {
+      method: 'POST',
+      headers: {'X-XSRF-TOKEN': getCsrfToken()}
+    }).then(() => location.reload())
+      .catch(() => showToast('Failed to update queue', 'error'));
+  }
+</script>
+</body>
+</html>

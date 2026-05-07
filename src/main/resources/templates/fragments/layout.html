@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:fragment="head">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title th:text="${pageTitle != null ? pageTitle + ' — MediQueue' : 'MediQueue'}">MediQueue</title>
+
+  <!-- Google Fonts: Syne (display) + DM Sans (body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+
+  <!-- Lucide Icons via CDN -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+  <!-- App CSS -->
+  <link rel="stylesheet" th:href="@{/css/app.css}"/>
+</head>
+<body>
+
+<!-- ═══ SIDEBAR ═══════════════════════════════════════════════════════════════ -->
+<aside class="sidebar" id="sidebar" th:fragment="sidebar">
+  <div class="sidebar__brand">
+    <div class="brand-icon">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+        <rect width="28" height="28" rx="8" fill="white" fill-opacity="0.15"/>
+        <path d="M14 6v16M6 14h16" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <span class="brand-name">MediQueue</span>
+  </div>
+
+  <nav class="sidebar__nav">
+    <!-- ADMIN -->
+    <div sec:authorize="hasRole('ADMIN')">
+      <p class="nav-label">Administration</p>
+      <a th:href="@{/admin/dashboard}"
+         th:classappend="${#strings.contains(requestUri, '/admin/dashboard') ? 'active' : ''}"
+         class="nav-item">
+        <i data-lucide="layout-dashboard" class="nav-icon"></i> Dashboard
+      </a>
+      <a th:href="@{/admin/users}"
+         th:classappend="${#strings.contains(requestUri, '/admin/users') ? 'active' : ''}"
+         class="nav-item">
+        <i data-lucide="users" class="nav-icon"></i> Users
+      </a>
+      <a th:href="@{/admin/departments}"
+         th:classappend="${#strings.contains(requestUri, '/admin/departments') ? 'active' : ''}"
+         class="nav-item">
+        <i data-lucide="building-2" class="nav-icon"></i> Departments
+      </a>
+      <a th:href="@{/admin/audit-logs}"
+         th:classappend="${#strings.contains(requestUri, '/audit-logs') ? 'active' : ''}"
+         class="nav-item">
+        <i data-lucide="scroll-text" class="nav-icon"></i> Audit Logs
+      </a>
+    </div>
+
+    <!-- DOCTOR -->
+    <div sec:authorize="hasRole('DOCTOR')">
+      <p class="nav-label">Doctor Portal</p>
+      <a th:href="@{/doctor/dashboard}"
+         th:classappend="${#strings.contains(requestUri, '/doctor/dashboard') ? 'active' : ''}"
+         class="nav-item">
+        <i data-lucide="stethoscope" class="nav-icon"></i> My Dashboard
+      </a>
+      <a th:href="@{/doctor/queue}"
+         th:classappend="${#strings.contains(requestUri, '/doctor/queue') ? 'active' : ''}"
+         class="nav-item">
+        <i data-lucide="list-ordered" class="nav-icon"></i> Patient Queue
+      </a>
+    </div>
+
+    <!-- RECEPTIONIST -->
+    <div sec:authorize="hasRole('RECEPTIONIST')">
+      <p class="nav-label">Front Desk</p>
+      <a th:href="@{/receptionist/dashboard}"
+         th:classappend="${#strings.contains(requestUri, '/receptionist/dashboard') ? 'active' : ''}"
+         class="nav-item">
+        <i data-lucide="monitor" class="nav-icon"></i> Dashboard
+      </a>
+      <a th:href="@{/receptionist/register-patient}"
+         th:classappend="${#strings.contains(requestUri, 'register-patient') ? 'active' : ''}"
+         class="nav-item">
+        <i data-lucide="user-plus" class="nav-icon"></i> Register Patient
+      </a>
+    </div>
+
+    <!-- SHARED -->
+    <p class="nav-label">Tools</p>
+    <a th:href="@{/reports}"
+       th:classappend="${#strings.contains(requestUri, '/reports') ? 'active' : ''}"
+       class="nav-item"
+       sec:authorize="hasAnyRole('ADMIN','DOCTOR')">
+      <i data-lucide="file-bar-chart" class="nav-icon"></i> Reports
+    </a>
+    <a th:href="@{/chat}" class="nav-item"
+       th:classappend="${#strings.contains(requestUri, '/chat') ? 'active' : ''}">
+      <i data-lucide="message-circle" class="nav-icon"></i> Staff Chat
+      <span class="badge-dot" id="chat-unread" style="display:none"></span>
+    </a>
+  </nav>
+
+  <div class="sidebar__footer">
+    <div class="user-chip">
+      <div class="user-avatar" sec:authentication="name">U</div>
+      <div class="user-info">
+        <span class="user-name" sec:authentication="principal.fullName">User</span>
+        <span class="user-role" sec:authentication="principal.role">ROLE</span>
+      </div>
+    </div>
+    <form th:action="@{/auth/logout}" method="post" style="display:inline">
+      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+      <button type="submit" class="logout-btn" title="Logout">
+        <i data-lucide="log-out"></i>
+      </button>
+    </form>
+  </div>
+</aside>
+
+<!-- ═══ MAIN CONTENT ══════════════════════════════════════════════════════════ -->
+<div class="main-wrap">
+  <header class="topbar" th:fragment="topbar">
+    <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()">
+      <i data-lucide="menu"></i>
+    </button>
+    <h1 class="topbar__title" th:text="${pageTitle ?: 'Dashboard'}">Dashboard</h1>
+    <div class="topbar__right">
+      <div class="live-indicator">
+        <span class="live-dot"></span>
+        <span>Live</span>
+      </div>
+      <span class="topbar__time" id="clock"></span>
+    </div>
+  </header>
+
+  <main class="content-area">
+    <!-- Flash messages -->
+    <div th:if="${successMsg}" class="alert alert--success" role="alert">
+      <i data-lucide="check-circle-2"></i>
+      <span th:text="${successMsg}"></span>
+    </div>
+    <div th:if="${errorMsg}" class="alert alert--error" role="alert">
+      <i data-lucide="alert-circle"></i>
+      <span th:text="${errorMsg}"></span>
+    </div>
+
+    <!-- Page content injection (used when layout is the root template) -->
+  </main>
+</div>
+
+<!-- ═══ SCRIPTS ═══════════════════════════════════════════════════════════════ -->
+<script th:src="@{/js/app.js}"></script>
+<script>lucide.createIcons();</script>
+</body>
+</html>

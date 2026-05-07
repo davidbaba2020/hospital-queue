@@ -1,0 +1,84 @@
+version: '3.9'
+
+services:
+
+  # ── PostgreSQL Database ──────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: mediqueue-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       ${POSTGRES_DB:-hospitaldb}
+      POSTGRES_USER:     ${POSTGRES_USER:-hospitaluser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hospitalpass}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-hospitaluser} -d ${POSTGRES_DB:-hospitaldb}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - mediqueue-net
+
+  # ── Application ──────────────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mediqueue-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DATABASE_URL:      jdbc:postgresql://postgres:5432/${POSTGRES_DB:-hospitaldb}
+      DATABASE_USERNAME: ${POSTGRES_USER:-hospitaluser}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-hospitalpass}
+      JWT_SECRET:        ${JWT_SECRET:-change-me-in-production-very-long-secret-key-at-least-64-chars}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-86400000}
+      MAIL_HOST:         ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT:         ${MAIL_PORT:-587}
+      MAIL_USERNAME:     ${MAIL_USERNAME:-noreply@hospital.com}
+      MAIL_PASSWORD:     ${MAIL_PASSWORD:-changeme}
+      MAIL_FROM:         ${MAIL_FROM:-noreply@hospital.com}
+      PORT:              8080
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - mediqueue-net
+    labels:
+      com.mediqueue.service: "application"
+
+  # ── Optional: Nginx reverse proxy ────────────────────────────
+  # nginx:
+  #   image: nginx:alpine
+  #   container_name: mediqueue-nginx
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - app
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./nginx.conf:/etc/nginx/nginx.conf:ro
+  #     - ./ssl:/etc/nginx/ssl:ro
+  #   networks:
+  #     - mediqueue-net
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  mediqueue-net:
+    driver: bridge

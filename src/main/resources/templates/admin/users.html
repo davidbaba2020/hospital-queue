@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<link rel="stylesheet" th:href="@{/css/app.css}"/></head>
+<body>
+<th:block th:replace="~{fragments/layout :: sidebar}"></th:block>
+<div class="main-wrap">
+  <th:block th:replace="~{fragments/layout :: topbar}"></th:block>
+  <main class="content-area">
+
+    <div th:if="${successMsg}" class="alert alert--success">
+      <i data-lucide="check-circle-2"></i><span th:text="${successMsg}"></span>
+    </div>
+    <div th:if="${errorMsg}" class="alert alert--error">
+      <i data-lucide="alert-circle"></i><span th:text="${errorMsg}"></span>
+    </div>
+
+    <div class="two-col">
+
+      <!-- Users list -->
+      <div class="table-card">
+        <div class="table-card__header">
+          <h3><i data-lucide="users"></i> All Users</h3>
+          <span class="badge badge--info" th:text="${users.size() + ' users'}">0 users</span>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr><th>Name</th><th>Username</th><th>Role</th><th>Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+              <tr th:each="user : ${users}">
+                <td>
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <div class="user-avatar" style="width:30px;height:30px;font-size:11px"
+                         th:text="${#strings.substring(user.fullName,0,2).toUpperCase()}">AB</div>
+                    <span th:text="${user.fullName}">Name</span>
+                  </div>
+                </td>
+                <td><span class="user-tag" th:text="${user.username}">user</span></td>
+                <td><span class="badge"
+                          th:classappend="${user.role.name() == 'ADMIN' ? 'badge--danger' :
+                                          user.role.name() == 'DOCTOR' ? 'badge--primary' : 'badge--info'}"
+                          th:text="${user.role}">ROLE</span></td>
+                <td>
+                  <span th:if="${user.enabled}" class="badge badge--success">Active</span>
+                  <span th:unless="${user.enabled}" class="badge badge--secondary">Disabled</span>
+                </td>
+                <td>
+                  <div style="display:flex;gap:6px">
+                    <form th:action="@{/admin/users/{id}/toggle(id=${user.id})}" method="post" style="display:inline">
+                      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                      <button type="submit" class="btn btn--xs btn--ghost"
+                              th:title="${user.enabled ? 'Disable' : 'Enable'}">
+                        <i th:data-lucide="${user.enabled ? 'user-x' : 'user-check'}"></i>
+                      </button>
+                    </form>
+                    <button class="btn btn--xs btn--ghost"
+                            th:attr="data-user-id=${user.id},data-username=${user.username}"
+                            onclick="deleteUser(this.dataset.userId, this.dataset.username)"
+                            title="Delete" style="color:var(--red)">
+                      <i data-lucide="trash-2"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Create user form -->
+      <div class="panel">
+        <div class="panel__header">
+          <h3><i data-lucide="user-plus"></i> Create New User</h3>
+        </div>
+        <form th:action="@{/admin/users/create}" method="post"
+              th:object="${registerRequest}"
+              style="padding:20px" novalidate>
+          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+          <div class="form-group" style="margin-bottom:14px">
+            <label class="form-label">Full Name *</label>
+            <input type="text" th:field="*{fullName}" class="form-input" placeholder="Dr. Jane Smith"/>
+          </div>
+          <div class="form-row" style="margin-bottom:14px">
+            <div class="form-group">
+              <label class="form-label">Username *</label>
+              <input type="text" th:field="*{username}" class="form-input" placeholder="jane.smith"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Phone</label>
+              <input type="tel" th:field="*{phone}" class="form-input" placeholder="+1-555-0100"/>
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:14px">
+            <label class="form-label">Email *</label>
+            <input type="email" th:field="*{email}" class="form-input" placeholder="jane@hospital.com"/>
+          </div>
+          <div class="form-row" style="margin-bottom:14px">
+            <div class="form-group">
+              <label class="form-label">Password *</label>
+              <input type="password" th:field="*{password}" class="form-input" placeholder="Min 8 chars"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Role *</label>
+              <select th:field="*{role}" class="form-select" onchange="toggleDoctorFields(this.value)">
+                <option th:each="r : ${roles}" th:value="${r}" th:text="${r}">ROLE</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Doctor-only fields -->
+          <div id="doctor-fields" style="display:none">
+            <div class="form-group" style="margin-bottom:14px">
+              <label class="form-label">Department</label>
+              <select th:field="*{departmentId}" class="form-select">
+                <option value="">Select department…</option>
+                <option th:each="d : ${departments}" th:value="${d.id}" th:text="${d.name}">Dept</option>
+              </select>
+            </div>
+            <div class="form-row" style="margin-bottom:14px">
+              <div class="form-group">
+                <label class="form-label">Specialization</label>
+                <input type="text" th:field="*{specialization}" class="form-input" placeholder="Cardiology"/>
+              </div>
+              <div class="form-group">
+                <label class="form-label">License Number</label>
+                <input type="text" th:field="*{licenseNumber}" class="form-input" placeholder="LIC-000-001"/>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn--primary btn--full">
+            <i data-lucide="user-plus"></i> Create User
+          </button>
+        </form>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  lucide.createIcons();
+  function toggleDoctorFields(role) {
+    document.getElementById('doctor-fields').style.display = role === 'DOCTOR' ? 'block' : 'none';
+  }
+  function deleteUser(id, username) {
+    if (!confirm('Delete user "' + username + '"? This cannot be undone.')) return;
+    fetch('/admin/users/' + id, {
+      method: 'DELETE', headers: {'X-XSRF-TOKEN': getCsrfToken()}
+    }).then(r => r.json()).then(d => {
+      if (d.success) { showToast('User deleted', 'success'); setTimeout(() => location.reload(), 1000); }
+      else showToast(d.message || 'Error', 'error');
+    });
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head}"></head>
+<body>
+<th:block th:replace="~{fragments/layout :: sidebar}"></th:block>
+<div class="main-wrap">
+  <th:block th:replace="~{fragments/layout :: topbar}"></th:block>
+  <main class="content-area">
+
+    <div th:if="${successMsg}" class="alert alert--success">
+      <i data-lucide="check-circle-2"></i><span th:text="${successMsg}"></span>
+    </div>
+
+    <!-- ── Stats Grid ─────────────────────────────────────────────── -->
+    <div class="stats-grid">
+      <div class="stat-card stat-card--blue">
+        <div class="stat-card__icon"><i data-lucide="users"></i></div>
+        <div class="stat-card__body">
+          <p class="stat-card__label">Total Patients</p>
+          <p class="stat-card__value" th:text="${stats.totalPatients}">0</p>
+          <p class="stat-card__sub">Registered in system</p>
+        </div>
+      </div>
+      <div class="stat-card stat-card--teal">
+        <div class="stat-card__icon"><i data-lucide="clock"></i></div>
+        <div class="stat-card__body">
+          <p class="stat-card__label">Waiting</p>
+          <p class="stat-card__value" id="stat-waiting" th:text="${stats.waitingCount}">0</p>
+          <p class="stat-card__sub">In queue right now</p>
+        </div>
+      </div>
+      <div class="stat-card stat-card--orange">
+        <div class="stat-card__icon"><i data-lucide="activity"></i></div>
+        <div class="stat-card__body">
+          <p class="stat-card__label">In Progress</p>
+          <p class="stat-card__value" id="stat-inprogress" th:text="${stats.inProgressCount}">0</p>
+          <p class="stat-card__sub">Currently being seen</p>
+        </div>
+      </div>
+      <div class="stat-card stat-card--green">
+        <div class="stat-card__icon"><i data-lucide="check-circle"></i></div>
+        <div class="stat-card__body">
+          <p class="stat-card__label">Completed Today</p>
+          <p class="stat-card__value" th:text="${stats.completedToday}">0</p>
+          <p class="stat-card__sub">Consultations done</p>
+        </div>
+      </div>
+      <div class="stat-card stat-card--purple">
+        <div class="stat-card__icon"><i data-lucide="stethoscope"></i></div>
+        <div class="stat-card__body">
+          <p class="stat-card__label">Available Doctors</p>
+          <p class="stat-card__value" th:text="${stats.availableDoctors + '/' + stats.totalDoctors}">0</p>
+          <p class="stat-card__sub">Ready to see patients</p>
+        </div>
+      </div>
+      <div class="stat-card stat-card--red">
+        <div class="stat-card__icon"><i data-lucide="scroll-text"></i></div>
+        <div class="stat-card__body">
+          <p class="stat-card__label">Audit Events Today</p>
+          <p class="stat-card__value" th:text="${stats.auditEventsToday}">0</p>
+          <p class="stat-card__sub">System activities logged</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Doctor Status Board ────────────────────────────────────── -->
+    <div class="section-header">
+      <h2 class="section-title"><i data-lucide="stethoscope"></i> Doctor Status Board</h2>
+      <span class="live-pill"><span class="live-dot"></span> Live</span>
+    </div>
+    <div class="doctor-grid" id="doctor-board">
+      <div th:each="doc : ${doctors}" class="doctor-card"
+           th:classappend="${doc.status.name() == 'AVAILABLE' ? ' doctor-card--available' :
+                            doc.status.name() == 'BUSY' ? ' doctor-card--busy' :
+                            doc.status.name() == 'ON_BREAK' ? ' doctor-card--break' : ' doctor-card--offline'}"
+           th:data-doctor-id="${doc.id}">
+        <div class="doctor-card__avatar" th:text="${#strings.substring(doc.user.fullName,3,5).toUpperCase()}">DR</div>
+        <div class="doctor-card__info">
+          <p class="doctor-card__name" th:text="${doc.user.fullName}">Dr. Name</p>
+          <p class="doctor-card__dept" th:text="${doc.department.name}">Department</p>
+          <p class="doctor-card__spec" th:text="${doc.specialization}">Specialization</p>
+        </div>
+        <div class="doctor-card__status">
+          <span class="status-badge"
+                th:classappend="${doc.status.name()}"
+                th:text="${doc.status.label}">Status</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Quick Actions ─────────────────────────────────────────── -->
+    <div class="quick-actions">
+      <a th:href="@{/admin/users}"       class="qa-btn"><i data-lucide="user-plus"></i> Add User</a>
+      <a th:href="@{/admin/audit-logs}"  class="qa-btn"><i data-lucide="scroll-text"></i> Audit Logs</a>
+      <a th:href="@{/reports}"           class="qa-btn"><i data-lucide="download"></i> Reports</a>
+      <a th:href="@{/chat}"              class="qa-btn"><i data-lucide="message-circle"></i> Staff Chat</a>
+    </div>
+
+  </main>
+</div>
+
+<script th:src="@{/js/app.js}"></script>
+<script th:src="@{/js/queue.js}"></script>
+<script>
+  lucide.createIcons();
+  // Subscribe to live queue updates
+  connectQueueSocket('global');
+</script>
+</body>
+</html>

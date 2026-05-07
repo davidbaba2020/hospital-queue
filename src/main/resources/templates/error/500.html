@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <title>500 Server Error — MediQueue</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'DM Sans',sans-serif;background:#f4f7fb;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center}
+    .card{background:#fff;border-radius:20px;padding:60px 48px;max-width:480px;box-shadow:0 8px 32px rgba(0,0,0,.08)}
+    .code{font-family:'Syne',sans-serif;font-size:96px;font-weight:800;color:#ea580c;line-height:1}
+    .title{font-family:'Syne',sans-serif;font-size:24px;font-weight:700;color:#1a3a52;margin:12px 0 8px}
+    .msg{color:#6b7280;font-size:15px;line-height:1.7;margin-bottom:8px}
+    .err-id{font-size:11px;color:#9ca3af;margin-bottom:28px;font-family:monospace}
+    .btn{display:inline-flex;padding:10px 24px;border-radius:10px;background:#1a5676;color:#fff;font-weight:600;text-decoration:none;font-size:14px}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="code">500</div>
+    <h1 class="title">Something Went Wrong</h1>
+    <p class="msg">An unexpected error occurred on the server.</p>
+    <p class="err-id" th:if="${errorId}">Error ID: <span th:text="${errorId}">—</span></p>
+    <a href="javascript:location.reload()" class="btn">Try Again</a>
+  </div>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<link rel="stylesheet" th:href="@{/css/app.css}"/></head>
+<body>
+<th:block th:replace="~{fragments/layout :: sidebar}"></th:block>
+<div class="main-wrap">
+  <th:block th:replace="~{fragments/layout :: topbar}"></th:block>
+  <main class="content-area">
+
+    <div th:if="${successMsg}" class="alert alert--success">
+      <i data-lucide="check-circle-2"></i><span th:text="${successMsg}"></span>
+    </div>
+
+    <!-- Quick stats row -->
+    <div class="stats-row">
+      <div class="mini-stat">
+        <i data-lucide="clock" class="mini-stat__icon"></i>
+        <div>
+          <p class="mini-stat__val" id="waiting-count">—</p>
+          <p class="mini-stat__label">Waiting</p>
+        </div>
+      </div>
+      <div class="mini-stat">
+        <i data-lucide="activity" class="mini-stat__icon"></i>
+        <div>
+          <p class="mini-stat__val" id="inprogress-count">—</p>
+          <p class="mini-stat__label">In Progress</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="two-col">
+
+      <!-- Left: Live queue -->
+      <div class="panel">
+        <div class="panel__header">
+          <h3><i data-lucide="list-ordered"></i> Live Queue</h3>
+          <a th:href="@{/receptionist/register-patient}" class="btn btn--primary btn--sm">
+            <i data-lucide="plus"></i> Add Patient
+          </a>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table data-table--compact">
+            <thead>
+              <tr><th>Ticket</th><th>Patient</th><th>Dept</th><th>Priority</th><th>Status</th><th>Time</th><th></th></tr>
+            </thead>
+            <tbody id="queue-tbody">
+              <tr th:each="entry : ${queuePage.content}">
+                <td class="mono"><strong th:text="${entry.ticketNumber}">TKT</strong></td>
+                <td th:text="${entry.patient.fullName}">Name</td>
+                <td th:text="${entry.department.name}">Dept</td>
+                <td>
+                  <span class="priority-dot"
+                        th:classappend="${'priority-dot--' + entry.priority.name().toLowerCase()}"
+                        th:text="${entry.priority.name()}">NORMAL</span>
+                </td>
+                <td>
+                  <span class="badge"
+                        th:classappend="${entry.status.name() == 'WAITING' ? 'badge--warning' :
+                                        entry.status.name() == 'IN_PROGRESS' ? 'badge--primary' :
+                                        entry.status.name() == 'COMPLETED' ? 'badge--success' : 'badge--secondary'}"
+                        th:text="${entry.status}">WAITING</span>
+                </td>
+                <td class="text-sm" th:text="${#temporals.format(entry.registeredAt,'HH:mm')}">00:00</td>
+                <td>
+                  <button th:if="${entry.status.name() == 'WAITING'}"
+                          class="btn btn--xs btn--teal"
+                          th:onclick="'callNext(' + ${entry.department.id} + ')'">
+                    <i data-lucide="bell"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Right: Department summary -->
+      <div class="panel">
+        <div class="panel__header">
+          <h3><i data-lucide="building-2"></i> Departments</h3>
+        </div>
+        <div class="dept-list">
+          <div th:each="dept : ${departments}" class="dept-row">
+            <div class="dept-row__info">
+              <span class="dept-code" th:text="${dept.code}">GEN</span>
+              <span th:text="${dept.name}">Dept Name</span>
+            </div>
+            <button class="btn btn--xs btn--primary"
+                    th:onclick="'callNext(' + ${dept.id} + ')'">
+              Call Next
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+<script th:src="@{/js/app.js}"></script>
+<script th:src="@{/js/queue.js}"></script>
+<script>
+  lucide.createIcons();
+  connectQueueSocket('global');
+  function callNext(deptId) {
+    fetch('/receptionist/queue/' + deptId + '/call-next', {
+      method: 'POST', headers: {'X-XSRF-TOKEN': getCsrfToken()}
+    }).then(r => r.json()).then(d => {
+      showToast(d.message, 'success');
+    }).catch(() => showToast('No patients waiting or error', 'error'));
+  }
+</script>
+</body>
+</html>
